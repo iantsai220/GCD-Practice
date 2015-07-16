@@ -11,6 +11,7 @@
 
 @interface PhotoManager ()
 @property (nonatomic, strong) NSMutableArray *photosArray;
+@property (nonatomic, strong) dispatch_queue_t concurrentPhotoQueue;
 @end
 
 @implementation PhotoManager
@@ -41,9 +42,12 @@
 - (void)addPhoto:(Photo *)photo
 {
     if (photo) {
-        [_photosArray addObject:photo];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self postContentAddedNotification];
+        dispatch_barrier_async(self.concurrentPhotoQueue, ^{
+            [_photosArray addObject:photo];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self postContentAddedNotification];
+            });
+
         });
     }
 }
